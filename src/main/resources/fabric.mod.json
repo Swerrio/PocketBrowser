@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "pocketbrowser",
+  "version": "${version}",
+  "name": "Pocket Browser",
+  "description": "Browser inside Minecraft.",
+  "authors": [
+    "Swerrio"
+  ],
+  "contact": {
+    "sources": "https://github.com/Swerrio/PocketBrowser"
+  },
+  "license": "MIT",
+  "icon": "assets/pocketbrowser/textures/gui/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "io.swerr.pocketbrowser.client.PocketBrowserClient"
+    ],
+    "modmenu": [
+      "io.swerr.pocketbrowser.client.PocketBrowserModMenuCompat"
+    ]
+  },
+  "suggests": {
+    "modmenu": "*"
+  },
+  "depends": {
+    "minecraft": ">=26.1 <26.3",
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "java": ">=25"
+  }
+}

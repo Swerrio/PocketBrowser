@@ -31,5 +31,10 @@ jobs:
           modrinth-id: RHFAeE3z
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           loaders: fabric
-          game-versions: 26.1, 26.1.1, 26.1.2, 26.2
+          game-versions: |
+            26.1
+            26.1.1
+            26.1.2
+            26.2
           version-type: release
+          changelog-file: CHANGELOG.md

@@ -24,13 +24,12 @@ jobs:
       - run: ./gradlew build
 
       # Reads the name, version and dependencies out of fabric.mod.json, attaches the jar to a
-      # GitHub release and, once the Modrinth lines below are filled in, uploads there too.
+      # GitHub release and uploads the same jar to Modrinth.
       - uses: Kira-NT/mc-publish@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          modrinth-id: RHFAeE3z
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           loaders: fabric
           game-versions: 26.1, 26.1.1, 26.1.2, 26.2
           version-type: release
-
-          # modrinth-id: paste the project id from the Modrinth page
-          # modrinth-token: ${{ secrets.MODRINTH_TOKEN }}

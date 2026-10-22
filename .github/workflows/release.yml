@@ -2,39 +2,105 @@ name: Release
 
 on:
   push:
-    tags: [ 'v*' ]
-  workflow_dispatch:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  publish:
+    name: Publish ${{ matrix.branch }}
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
 
-      - uses: actions/setup-java@v5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - branch: master
+            java: '25'
+            games: 26.3
+          - branch: '26.2'
+            java: '25'
+            games: |
+              26.1
+              26.1.1
+              26.1.2
+              26.2
+
+    steps:
+      - name: Check out ${{ matrix.branch }}
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 25
+          java-version: ${{ matrix.java }}
 
-      - uses: gradle/actions/setup-gradle@v6
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
-      - run: ./gradlew build
+      - name: Resolve version metadata
+        run: |
+          echo "MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
+          echo "MC_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
 
-      # Reads the name, version and dependencies out of fabric.mod.json, attaches the jar to a
-      # GitHub release and uploads the same jar to Modrinth.
-      - uses: Kira-NT/mc-publish@v3
+      - name: Build release artifacts
+        run: ./gradlew build --stacktrace
+
+      - name: Validate jar metadata
+        run: |
+          unzip -p "build/libs/pocketbrowser-${MOD_VERSION}+${MC_VERSION}.jar" fabric.mod.json > fmj.json
+          cat fmj.json
+          grep -q "\"version\": \"${MOD_VERSION}+${MC_VERSION}\"" fmj.json
+
+      - name: Publish to Modrinth
+        uses: Kira-NT/mc-publish@v3
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           modrinth-id: RHFAeE3z
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-          loaders: fabric
-          game-versions: |
-            26.1
-            26.1.1
-            26.1.2
-            26.2
+          files: |
+            build/libs/!(*-@(dev|sources|javadoc)).jar
+          version: ${{ env.MOD_VERSION }}+${{ env.MC_VERSION }}
+          name: MC ${{ env.MC_VERSION }} // Pocket Browser ${{ env.MOD_VERSION }}
           version-type: release
+          loaders: fabric
+          game-versions: ${{ matrix.games }}
           changelog-file: CHANGELOG.md
+          retry-attempts: 3
+
+      - name: Keep the jar for the release
+        uses: actions/upload-artifact@v7
+        with:
+          name: jar-${{ matrix.branch }}
+          path: build/libs/pocketbrowser-*.jar
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Collect the jars
+        uses: actions/download-artifact@v8
+        with:
+          path: jars
+          merge-multiple: true
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          find jars -name '*-sources.jar' -delete
+          ls -la jars
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME#v}" \
+            --notes-file CHANGELOG.md \
+            jars/*.jar

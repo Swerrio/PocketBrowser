@@ -9,24 +9,48 @@ permissions:
   contents: write
 
 jobs:
+  plan:
+    name: Pick branches
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+      notes: ${{ steps.pick.outputs.notes }}
+
+    steps:
+      - name: Pick the branches for ${{ github.ref_name }}
+        id: pick
+        env:
+          BRANCHES: |
+            [
+              {"branch": "master", "mc": "26.3", "java": "25", "games": "26.3"},
+              {"branch": "26.2", "mc": "26.2", "java": "25", "games": "26.1\n26.1.1\n26.1.2\n26.2"}
+            ]
+        run: |
+          case "$GITHUB_REF_NAME" in
+            *+*)
+              picked=$(jq -c --arg mc "${GITHUB_REF_NAME#*+}" '[.[] | select(.mc == $mc)]' <<< "$BRANCHES")
+              notes=$(jq -r '.[0].branch // empty' <<< "$picked")
+              ;;
+            *)
+              picked=$(jq -c . <<< "$BRANCHES")
+              notes=master
+              ;;
+          esac
+          if [ "$picked" = "[]" ]; then
+            echo "No branch builds Minecraft ${GITHUB_REF_NAME#*+}" >&2
+            exit 1
+          fi
+          echo "matrix={\"include\":$picked}" >> "$GITHUB_OUTPUT"
+          echo "notes=$notes" >> "$GITHUB_OUTPUT"
+
   publish:
     name: Publish ${{ matrix.branch }}
+    needs: plan
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - branch: master
-            java: '25'
-            games: 26.3
-          - branch: '26.2'
-            java: '25'
-            games: |
-              26.1
-              26.1.1
-              26.1.2
-              26.2
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
 
     steps:
       - name: Check out ${{ matrix.branch }}
@@ -47,6 +71,17 @@ jobs:
         run: |
           echo "MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
           echo "MC_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2)" >> "$GITHUB_ENV"
+
+      - name: Check the tag against ${{ matrix.branch }}
+        run: |
+          case "$GITHUB_REF_NAME" in
+            *+*) expected="v${MOD_VERSION}+${MC_VERSION}" ;;
+            *) expected="v${MOD_VERSION}" ;;
+          esac
+          if [ "$GITHUB_REF_NAME" != "$expected" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match $expected on ${{ matrix.branch }}" >&2
+            exit 1
+          fi
 
       - name: Build release artifacts
         run: ./gradlew build --stacktrace
@@ -81,12 +116,14 @@ jobs:
 
   release:
     name: GitHub release
-    needs: publish
+    needs: [plan, publish]
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out repository
+      - name: Check out ${{ needs.plan.outputs.notes }}
         uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.plan.outputs.notes }}
 
       - name: Collect the jars
         uses: actions/download-artifact@v8

@@ -28,7 +28,7 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLScancode;
 
 public class PocketBrowserClient implements ClientModInitializer {
     private static final int BUTTON_SIZE = 20;
@@ -38,25 +38,25 @@ public class PocketBrowserClient implements ClientModInitializer {
             KeyMapping.Category.register(PocketBrowser.id("main"));
 
     public static final KeyMapping OPEN_KEY = new KeyMapping(
-            "key.pocketbrowser.open", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, CATEGORY);
+            "key.pocketbrowser.open", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_B, CATEGORY);
 
     public static final KeyMapping PIN_TOGGLE_KEY = new KeyMapping(
-            "key.pocketbrowser.pin", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_N, CATEGORY);
+            "key.pocketbrowser.pin", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_N, CATEGORY);
 
     public static final KeyMapping PIN_FOCUS_KEY = new KeyMapping(
-            "key.pocketbrowser.pin_focus", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, CATEGORY);
+            "key.pocketbrowser.pin_focus", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_M, CATEGORY);
 
     public static final KeyMapping PLAY_PAUSE_KEY = new KeyMapping(
-            "key.pocketbrowser.play_pause", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_P, CATEGORY);
+            "key.pocketbrowser.play_pause", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_P, CATEGORY);
 
     public static final KeyMapping SEEK_BACK_KEY = new KeyMapping(
-            "key.pocketbrowser.seek_back", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_BRACKET, CATEGORY);
+            "key.pocketbrowser.seek_back", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_LEFTBRACKET, CATEGORY);
 
     public static final KeyMapping SEEK_FORWARD_KEY = new KeyMapping(
-            "key.pocketbrowser.seek_forward", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_RIGHT_BRACKET, CATEGORY);
+            "key.pocketbrowser.seek_forward", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_RIGHTBRACKET, CATEGORY);
 
     public static final KeyMapping MUTE_KEY = new KeyMapping(
-            "key.pocketbrowser.mute", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_O, CATEGORY);
+            "key.pocketbrowser.mute", InputConstants.Type.KEYBOARD, SDLScancode.SDL_SCANCODE_O, CATEGORY);
 
     @Override
     public void onInitializeClient() {

@@ -17,7 +17,8 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLScancode;
 
 public class PinnedScreen extends Screen {
     private enum Drag {
@@ -42,6 +43,7 @@ public class PinnedScreen extends Screen {
     @Override
     protected void init() {
         Browser.get().start();
+        minecraft.textInputManager().startTextInput(this);
     }
 
     @Override
@@ -53,6 +55,7 @@ public class PinnedScreen extends Screen {
     public void removed() {
         Config.get().save();
         panel.cancelDrag();
+        minecraft.textInputManager().stopTextInput(this);
     }
 
     private Rect frame() {
@@ -113,8 +116,8 @@ public class PinnedScreen extends Screen {
 
         if (PinnedWindow.pageArea(frame).contains(mouseX, mouseY)) {
             int modifiers = CdpKeys.modifiers(event.modifiers());
-            boolean ctrlClick = event.button() == 0 && (modifiers & 2) != 0;
-            if (event.button() == 2 || ctrlClick) {
+            boolean ctrlClick = event.button() == SDLMouse.SDL_BUTTON_LEFT && (modifiers & 2) != 0;
+            if (event.button() == SDLMouse.SDL_BUTTON_MIDDLE || ctrlClick) {
                 panel.openLinkUnder(Browser.get().activeTab(), mouseX, mouseY, ctrlClick, modifiers);
                 return true;
             }
@@ -193,7 +196,7 @@ public class PinnedScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == SDLScancode.SDL_SCANCODE_ESCAPE) {
             onClose();
             return true;
         }

@@ -91,7 +91,7 @@ No. The mod itself uploads nothing, and the browser loads only the pages you ope
 
 ## Requirements
 
-* Minecraft 26.1 to 26.2, Fabric Loader 0.16 or newer, Java 25
+* Minecraft 26.3, Fabric Loader 0.16 or newer, Java 25
 * [Fabric API](https://modrinth.com/mod/fabric-api), required
 * [Mod Menu](https://modrinth.com/mod/modmenu), optional, puts the settings in the mod list
 * A Chromium-based browser installed on the computer

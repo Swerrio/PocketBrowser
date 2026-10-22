@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLScancode;
 
 public final class UrlBar {
     private static final int PADDING = 4;
@@ -179,23 +179,23 @@ public final class UrlBar {
         boolean control = event.hasControlDown();
 
         switch (event.key()) {
-            case GLFW.GLFW_KEY_LEFT -> {
+            case SDLScancode.SDL_SCANCODE_LEFT -> {
                 move(control ? previousWord() : cursor - 1, shift);
                 return true;
             }
-            case GLFW.GLFW_KEY_RIGHT -> {
+            case SDLScancode.SDL_SCANCODE_RIGHT -> {
                 move(control ? nextWord() : cursor + 1, shift);
                 return true;
             }
-            case GLFW.GLFW_KEY_HOME -> {
+            case SDLScancode.SDL_SCANCODE_HOME -> {
                 move(0, shift);
                 return true;
             }
-            case GLFW.GLFW_KEY_END -> {
+            case SDLScancode.SDL_SCANCODE_END -> {
                 move(text.length(), shift);
                 return true;
             }
-            case GLFW.GLFW_KEY_BACKSPACE -> {
+            case SDLScancode.SDL_SCANCODE_BACKSPACE -> {
                 if (hasSelection()) {
                     deleteSelection();
                 } else if (cursor > 0) {
@@ -206,7 +206,7 @@ public final class UrlBar {
                 }
                 return true;
             }
-            case GLFW.GLFW_KEY_DELETE -> {
+            case SDLScancode.SDL_SCANCODE_DELETE -> {
                 if (hasSelection()) {
                     deleteSelection();
                 } else if (cursor < text.length()) {

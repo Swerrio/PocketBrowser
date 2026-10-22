@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.Blaze3D;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.swerr.pocketbrowser.PocketBrowser;
 import io.swerr.pocketbrowser.config.Config;
@@ -30,9 +31,9 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.util.Util;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
+import org.lwjgl.sdl.SDLScancode;
 
 public class BrowserScreen extends Screen {
     private static final long OPEN_NANOS = 240_000_000L;
@@ -130,6 +131,7 @@ public class BrowserScreen extends Screen {
             openedAtNanos = System.nanoTime();
         }
         Browser.get().start();
+        minecraft.textInputManager().startTextInput(this);
         layout();
     }
 
@@ -169,6 +171,7 @@ public class BrowserScreen extends Screen {
     public void removed() {
         Browser.get().rememberLastPage();
         page.cancelDrag();
+        minecraft.textInputManager().stopTextInput(this);
     }
 
     @Override
@@ -199,8 +202,8 @@ public class BrowserScreen extends Screen {
         if (minecraft == null) {
             return false;
         }
-        return InputConstants.isKeyDown(minecraft.getWindow(), GLFW.GLFW_KEY_LEFT_CONTROL)
-                || InputConstants.isKeyDown(minecraft.getWindow(), GLFW.GLFW_KEY_RIGHT_CONTROL);
+        return InputConstants.isKeyDown(SDLScancode.SDL_SCANCODE_LCTRL)
+                || InputConstants.isKeyDown(SDLScancode.SDL_SCANCODE_RCTRL);
     }
 
     private void layout() {
@@ -924,7 +927,7 @@ public class BrowserScreen extends Screen {
             return;
         }
         try {
-            Util.getPlatform().openUri(URI.create(tab.url()));
+            Blaze3D.openUri(URI.create(tab.url()));
         } catch (RuntimeException e) {
             PocketBrowser.LOG.warn("Could not hand {} to the system browser", tab.url(), e);
         }
@@ -992,8 +995,8 @@ public class BrowserScreen extends Screen {
             omnibox.setFocused(false);
             finder.setFocused(false);
 
-            boolean ctrlClick = button == 0 && (modifiers & 2) != 0;
-            if (button == 2 || ctrlClick) {
+            boolean ctrlClick = button == SDLMouse.SDL_BUTTON_LEFT && (modifiers & 2) != 0;
+            if (button == SDLMouse.SDL_BUTTON_MIDDLE || ctrlClick) {
                 page.openLinkUnder(browser.activeTab(), mouseX, mouseY, ctrlClick, modifiers);
                 return true;
             }
@@ -1101,7 +1104,7 @@ public class BrowserScreen extends Screen {
                     continue;
                 }
                 boolean closable = tabWidth >= 52;
-                if (button == 2 || (closable && mouseX >= x1 - 15)) {
+                if (button == SDLMouse.SDL_BUTTON_MIDDLE || (closable && mouseX >= x1 - 15)) {
                     click();
                     browser.closeTab(tabs.get(i));
                 } else {
@@ -1301,11 +1304,11 @@ public class BrowserScreen extends Screen {
         BrowserTab tab = browser.activeTab();
 
         if (finder.isFocused()) {
-            if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+            if (event.key() == SDLScancode.SDL_SCANCODE_RETURN || event.key() == SDLScancode.SDL_SCANCODE_KP_ENTER) {
                 runFind(!event.hasShiftDown());
                 return true;
             }
-            if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+            if (event.key() == SDLScancode.SDL_SCANCODE_ESCAPE) {
                 setFindVisible(false);
                 return true;
             }
@@ -1316,11 +1319,11 @@ public class BrowserScreen extends Screen {
 
         if (omnibox.isFocused()) {
             switch (event.key()) {
-                case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
+                case SDLScancode.SDL_SCANCODE_RETURN, SDLScancode.SDL_SCANCODE_KP_ENTER -> {
                     commitOmnibox();
                     return true;
                 }
-                case GLFW.GLFW_KEY_ESCAPE -> {
+                case SDLScancode.SDL_SCANCODE_ESCAPE -> {
                     omnibox.setFocused(false);
                     highlightedSuggestion = -1;
                     if (tab != null) {
@@ -1328,11 +1331,11 @@ public class BrowserScreen extends Screen {
                     }
                     return true;
                 }
-                case GLFW.GLFW_KEY_DOWN -> {
+                case SDLScancode.SDL_SCANCODE_DOWN -> {
                     moveSuggestion(1);
                     return true;
                 }
-                case GLFW.GLFW_KEY_UP -> {
+                case SDLScancode.SDL_SCANCODE_UP -> {
                     moveSuggestion(-1);
                     return true;
                 }
@@ -1349,7 +1352,7 @@ public class BrowserScreen extends Screen {
             return true;
         }
 
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == SDLScancode.SDL_SCANCODE_ESCAPE) {
             beginClose();
             return true;
         }
@@ -1370,45 +1373,45 @@ public class BrowserScreen extends Screen {
 
         if (control && tab != null) {
             switch (event.key()) {
-                case GLFW.GLFW_KEY_T -> {
+                case SDLScancode.SDL_SCANCODE_T -> {
                     if (browser.tabs().size() < MAX_TABS) {
                         browser.newTab(Config.get().homePage);
                         layout();
                     }
                     return true;
                 }
-                case GLFW.GLFW_KEY_W -> {
+                case SDLScancode.SDL_SCANCODE_W -> {
                     browser.closeTab(tab);
                     layout();
                     return true;
                 }
-                case GLFW.GLFW_KEY_L -> {
+                case SDLScancode.SDL_SCANCODE_L -> {
                     finder.setFocused(false);
                     omnibox.setText(Urls.isBlank(tab.url()) ? "" : tab.url());
                     omnibox.focusAndSelectAll();
                     return true;
                 }
-                case GLFW.GLFW_KEY_R -> {
+                case SDLScancode.SDL_SCANCODE_R -> {
                     tab.reload(event.hasShiftDown());
                     return true;
                 }
-                case GLFW.GLFW_KEY_F -> {
+                case SDLScancode.SDL_SCANCODE_F -> {
                     setFindVisible(true);
                     return true;
                 }
-                case GLFW.GLFW_KEY_D -> {
+                case SDLScancode.SDL_SCANCODE_D -> {
                     BrowsingData.toggleBookmark(tab.url(), tab.title());
                     return true;
                 }
-                case GLFW.GLFW_KEY_EQUAL, GLFW.GLFW_KEY_KP_ADD -> {
+                case SDLScancode.SDL_SCANCODE_EQUALS, SDLScancode.SDL_SCANCODE_KP_PLUS -> {
                     changeZoom(0.1D);
                     return true;
                 }
-                case GLFW.GLFW_KEY_MINUS, GLFW.GLFW_KEY_KP_SUBTRACT -> {
+                case SDLScancode.SDL_SCANCODE_MINUS, SDLScancode.SDL_SCANCODE_KP_MINUS -> {
                     changeZoom(-0.1D);
                     return true;
                 }
-                case GLFW.GLFW_KEY_0 -> {
+                case SDLScancode.SDL_SCANCODE_0 -> {
                     Config config = Config.get();
                     config.zoom = 1.0D;
                     config.save();
@@ -1435,16 +1438,16 @@ public class BrowserScreen extends Screen {
         }
 
         if (tab != null && event.hasAltDown()) {
-            if (event.key() == GLFW.GLFW_KEY_LEFT) {
+            if (event.key() == SDLScancode.SDL_SCANCODE_LEFT) {
                 tab.back();
                 return true;
             }
-            if (event.key() == GLFW.GLFW_KEY_RIGHT) {
+            if (event.key() == SDLScancode.SDL_SCANCODE_RIGHT) {
                 tab.forward();
                 return true;
             }
         }
-        if (tab != null && event.key() == GLFW.GLFW_KEY_F5) {
+        if (tab != null && event.key() == SDLScancode.SDL_SCANCODE_F5) {
             tab.reload(event.hasControlDown());
             return true;
         }
